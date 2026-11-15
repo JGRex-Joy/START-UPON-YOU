@@ -24,6 +24,11 @@ Production hosting: serve `dist/` statically and add reverse-proxy rules for the
 * Observation time comes from `spherex.plane.time_bounds_lower`, never from the FITS `DATE` (file creation).
 * Missing values stay `NaN` and are ignored by every engine — never treated as 0.
 
+## Workflow
+Sky Map → Explorer → **Observatory Submission** → Research Journal. Analysis is an optional step between Explorer and Submission (nothing in Submission requires it; results from it are carried over if used).
+The Explorer's Image tab never shows channel controls; they exist only on the Spectral tab. When discovery returns no observations (or fails), Image says which, with the exact upstream error.
+Browser flow checks: `tests/e2e/explorer_flows.cjs` (fixtures for IRSA/S3 only).
+
 ## Status
 
 | Area | Status |

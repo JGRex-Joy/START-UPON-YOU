@@ -110,6 +110,12 @@ export interface EpochEntry {
   image?: FitsImage;
 }
 
+/** What the Level-2 exposure discovery services answered for the searched position (never invented, shown in the UI). */
+export interface DiscoveryReport {
+  attempts: { provider: string; ok: boolean; count: number; error?: string; warnings?: string[] }[];
+  searchedAt: SkyPosition;
+}
+
 export interface Dataset {
   origin: DataOrigin;
   title: string;
@@ -119,6 +125,8 @@ export interface Dataset {
   cubeInfo?: CubeInfo | null;
   /** Human readable explanation of the data structure shown in the UI. */
   structureNote: string;
+  /** Live datasets only: how the exposure discovery went (which services failed and why). */
+  discovery?: DiscoveryReport;
 }
 
 export interface SkyPosition {

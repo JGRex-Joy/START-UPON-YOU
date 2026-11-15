@@ -109,7 +109,10 @@ export function SkyPage({ goExplorer, goAbout, goAnalysis, entered, onReplayIntr
   const allSky = () => setFlyTo({ pos: ALLSKY_CENTRE, fovDeg: ALLSKY_FOV, seq: ++seq.current });
   const explore = () => {
     if (!target) return;
-    void actions.search(target.pos, target.name, target.challenge);
+    // The selected target and coordinates are kept as they are; the Explorer always opens on the Image view.
+    const loadedHere = state.dataset?.origin === 'spherex-live' && state.phase === 'ready' && state.dataset.title === target.name;
+    if (loadedHere) actions.patch({ tab: 'image' });
+    else void actions.search(target.pos, target.name, target.challenge);
     goExplorer();
   };
 

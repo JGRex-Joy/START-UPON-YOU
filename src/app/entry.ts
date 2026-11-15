@@ -16,11 +16,11 @@ export type EntryPhase =
   | 'sky_map_intro' | 'sky_pick' | 'sky_open'
   | 'exploring'            // the sky map, free to use
   | 'explorer_intro' | 'explorer_image' | 'explorer_compare' | 'explorer_spectral' | 'explorer_sky_context'
-  | 'analysis_intro' | 'analysis_detect' | 'analysis_subtract' | 'analysis_track'
-  | 'submission_nav' | 'submission_intro' | 'journal_nav' | 'journal_intro'
+  | 'explorer_continue'    // Analysis is optional: the tour explains that and points at CONTINUE TO SUBMISSION
+  | 'submission_intro' | 'journal_nav' | 'journal_intro'
   | 'onboarding_complete';
 
-export type TourRoute = 'sky' | 'explorer' | 'analysis' | 'submit' | 'journal';
+export type TourRoute = 'sky' | 'explorer' | 'submit' | 'journal';
 
 export interface TourStep {
   phase: EntryPhase;
@@ -41,7 +41,6 @@ export interface TourStep {
 }
 
 const TAB = (n: number) => `.stage__tabs .stage__tab:nth-of-type(${n})`;
-const TOOL = (n: number) => `.analysis__tabs .stage__tab:nth-of-type(${n})`;
 const NAV = (r: string) => `.nav__link[data-route="${r}"]`;
 
 /**
@@ -70,23 +69,11 @@ export const TOUR: TourStep[] = [
   { phase: 'explorer_sky_context', route: 'explorer', act: 'click', selector: TAB(4),
     text: "Sky Context shows what's around your target in other surveys and catalogues. Open Sky Context.",
     hint: 'Hint: click the highlighted Sky context tab.' },
-  { phase: 'analysis_intro', route: 'explorer', act: 'click', selector: NAV('analysis'),
-    text: "That's your Explorer! Now let's investigate what we've found. Open Analysis in the top bar.",
-    hint: 'Hint: Analysis is step 4 in the navigation at the top.' },
-  { phase: 'analysis_detect', route: 'analysis', act: 'click', selector: TOOL(1),
-    text: 'Welcome to Analysis! Source detection (a prototype) looks for points of light above the background. Treat what it finds as candidates. Open Source detection.',
-    hint: 'Hint: click the highlighted tool tab.' },
-  { phase: 'analysis_subtract', route: 'analysis', act: 'click', selector: TOOL(2),
-    text: 'Image subtraction (a prototype) takes one observation away from another, so what is left is what changed. Open Image subtraction.',
-    hint: 'Hint: click the highlighted tool tab.' },
-  { phase: 'analysis_track', route: 'analysis', act: 'click', selector: TOOL(3),
-    text: 'Cross-epoch tracking (a prototype) follows the same source between observations: that is how motion is measured. Open Cross-epoch tracking.',
-    hint: 'Hint: click the highlighted tool tab.' },
-  { phase: 'submission_nav', route: 'analysis', act: 'click', selector: NAV('submit'),
-    text: 'When you have looked at the evidence, you write it up. Open Submission in the top bar.',
-    hint: 'Hint: Submission is step 5 in the navigation at the top.' },
+  { phase: 'explorer_continue', route: 'explorer', act: 'click', selector: '[data-testid=\"continue-submission\"]',
+    text: "That's your Explorer! Analysis (detection, subtraction, tracking) is optional: open it from the top bar whenever you want to dig deeper. You can also submit what you found right now. Press Continue to Submission.",
+    hint: 'Hint: the button is at the top right of the Explorer. You never have to open Analysis to submit.' },
   { phase: 'submission_intro', route: 'submit', act: 'input', selector: '.subform input',
-    text: 'This is your research log: question, what you saw, what you conclude. Try it: type a title for your investigation.',
+    text: 'This is your research log: question, what you saw, what you conclude. No analysis is needed to submit. Try it: type a title for your investigation.',
     hint: 'Hint: click the Title field and type anything. You can change it later.' },
   { phase: 'journal_nav', route: 'submit', act: 'click', selector: NAV('journal'),
     text: 'When the log is complete, SUBMIT TO RESEARCH JOURNAL saves it. Now open Journal in the top bar to see where it goes.',
@@ -99,7 +86,7 @@ export const TOUR_TEXT = {
   skyIntro: 'This is the sky map — your way in. The five markers are our challenge targets; click one, or anywhere else, to see what has been observed there.',
   skyNext: 'Ready to explore a little deeper? This is your Explorer.',
   explorerIntro: 'Ready to explore a little deeper? This is your Explorer.',
-  analysisIntro: 'Welcome to Analysis! This is where exploration turns into investigation.',
+  analysisOptional: 'Analysis is optional: use it for a closer look, or submit your findings directly.',
   done: 'You\'re ready! The universe is yours to explore.',
   doneButton: 'START EXPLORING',
 } as const;

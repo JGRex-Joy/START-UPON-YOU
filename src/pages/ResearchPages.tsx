@@ -16,7 +16,7 @@ export function MissionsPage({ go }: { go: (r: Route) => void }) {
       <header className="research__head">
         <p className="eyebrow">Missions</p>
         <h1>Pick an investigation</h1>
-        <p className="dim">Five community investigations built on public SPHEREx data. Each one walks the same path: explore the target, analyse what you see, then submit your findings to the Research Journal. These are citizen-science exercises of this project, not official NASA missions.</p>
+        <p className="dim">Five community investigations built on public SPHEREx data. Each one walks the same path: explore the target, optionally analyse what you see, then submit your findings to the Research Journal. These are citizen-science exercises of this project, not official NASA missions.</p>
       </header>
       <div className="missions">
         {CHALLENGE_TARGETS.map((t) => (
@@ -45,6 +45,8 @@ export function SubmissionPage({ go }: { go: (r: Route) => void }) {
     ds ? `Data source: ${ds.origin === 'spherex-live' ? 'SPHEREx archive' : ds.origin === 'demo' ? 'synthetic demo data (not an observation)' : 'user FITS file'}` : 'No data was loaded in this session.',
     ds ? `Observations loaded: ${ds.epochs.length}` : '',
     ds?.cube ? 'Spectral cube loaded.' : '',
+    // Analysis results are carried over only if the user actually ran Analysis; nothing is required or invented.
+    ...Object.entries(state.detection).map(([id, r]) => `Source detection (prototype) on ${ds?.epochs.find((e) => e.id === id)?.label ?? id}: ${r.candidates.length} unverified candidate(s).`),
   ].filter(Boolean).join('\n');
   const [f, setF] = useState({ title: '', question: '', findings: '', conclusion: '', evidence: auto });
   const [tools, setTools] = useState<string[]>([]);
@@ -59,7 +61,7 @@ export function SubmissionPage({ go }: { go: (r: Route) => void }) {
         <div className="submitted">
           <p className="submitted__star">✦</p>
           <h1>Investigation complete</h1>
-          <p>“{saved.title}” is now in your Research Journal. You explored, analysed and documented a real research question — that is the whole scientific loop.</p>
+          <p>“{saved.title}” is now in your Research Journal. You explored and documented a real research question — that is the heart of the scientific loop.</p>
           <div className="research__row">
             <button className="btn btn--primary" onClick={() => go('journal')}>Open Research Journal</button>
             <button className="btn" onClick={() => go('missions')}>Choose another mission</button>
@@ -84,6 +86,7 @@ export function SubmissionPage({ go }: { go: (r: Route) => void }) {
       <header className="research__head station__head">
         <p className="eyebrow">Observatory Submission · Research log</p>
         <h1>Log your investigation</h1>
+        <p className="dim">Analysis is optional: you can submit your findings straight from the Explorer. <button className="linkbtn" onClick={() => go('analysis')}>Open Analysis (optional)</button> · <button className="linkbtn" onClick={() => go('explorer')}>Back to Explorer</button></p>
       </header>
 
       <aside className="station__left" aria-label="Sky and evidence">

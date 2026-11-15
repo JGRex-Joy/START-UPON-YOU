@@ -31,7 +31,7 @@ function DetectTool() {
   );
 }
 
-export function AnalysisPage({ goExplorer }: { goExplorer: () => void }) {
+export function AnalysisPage({ goExplorer, goSubmission }: { goExplorer: () => void; goSubmission: () => void }) {
   const { state } = useStore();
   const [tool, setTool] = useState<Tool>('detect');
   if (!state.dataset || state.dataset.epochs.length === 0) {
@@ -41,7 +41,10 @@ export function AnalysisPage({ goExplorer }: { goExplorer: () => void }) {
         <p>{state.dataset
           ? 'The loaded product has no individual epochs to analyse (it is a spectral cube).'
           : state.target ? `${state.target.name} is selected, but its data has not been loaded yet. Analysis runs on the epochs of the loaded data.` : 'Load a position in the Explorer first. Analysis runs on the epochs of the loaded data.'}</p>
-        <button className="btn btn--primary" onClick={goExplorer}>{state.target && !state.dataset ? `Load ${state.target.name}` : 'Go to Explorer'}</button>
+        <div className="stage__actions">
+          <button className="btn btn--primary" onClick={goExplorer}>{state.target && !state.dataset ? `Load ${state.target.name}` : 'Go to Explorer'}</button>
+          <button className="btn" onClick={goSubmission}>Continue to Submission (Analysis is optional)</button>
+        </div>
       </div>
     );
   }
@@ -53,6 +56,7 @@ export function AnalysisPage({ goExplorer }: { goExplorer: () => void }) {
             {t.label} <span className="tag">{t.status}</span>
           </button>
         ))}
+        <button className="btn btn--primary" style={{ marginLeft: 'auto' }} data-testid="continue-submission" onClick={goSubmission}>CONTINUE TO SUBMISSION →</button>
         {state.dataset.origin === 'demo' && <span className="badge badge--demo analysis__demo">Running on synthetic demonstration data</span>}
       </div>
       <p className="toolnote"><img src={`${import.meta.env.BASE_URL}nyan-cat.png`} alt="" /><span><b>{TOOLS.find((t) => t.id === tool)?.label}</b> — {TOOLS.find((t) => t.id === tool)?.note}</span></p>

@@ -61,24 +61,19 @@ check('companion greeting is exactly the wording from the brief', COMPANION_GREE
 check('the onboarding states run in order and never go back', (() => {
   const seen: EntryPhase[] = ['welcome_flying'];
   for (let i = 0; i < 15; i++) seen.push(nextEntryPhase(seen[seen.length - 1]));
-  return seen.join(' ').startsWith('welcome_flying welcome_dialogue entering_universe sky_map_intro exploring explorer_intro explorer_image explorer_compare explorer_spectral explorer_sky_context analysis_intro analysis_detect analysis_subtract analysis_track onboarding_complete onboarding_complete');
+  return seen.join(' ').startsWith('welcome_flying welcome_dialogue entering_universe sky_map_intro sky_pick sky_open explorer_image explorer_compare explorer_spectral explorer_sky_context explorer_continue submission_intro journal_nav journal_intro onboarding_complete onboarding_complete');
 })());
-check('every tour step points at a real element and belongs to a real page', TOUR.length === 7
-  && TOUR.filter((s) => s.route === 'explorer').length === 4 && TOUR.filter((s) => s.route === 'analysis').length === 3
+check('every tour step belongs to a real page; Analysis is never a tour step', TOUR.length === 11
+  && TOUR.filter((s) => s.route === 'explorer').length === 5 && !TOUR.some((s) => (s.route as string) === 'analysis' || /analysis_/.test(s.phase))
   && TOUR.every((s) => s.text.length > 0 && s.text.length > 40));
-check('tour steps carry the wording from the brief', [
-  'Image lets you see the actual astronomical observations',
-  'Compare lets you look at observations side by side',
-  'Every object has a story written in light',
-  "Sky Context helps you understand what's around your target",
-].every((t, i) => TOUR[i].text.includes(t)));
-check('the Analysis steps name the three prototypes and say so', TOUR.slice(4).every((s) => /prototype/i.test(s.text))
-  && /Source detection/.test(TOUR[4].text) && /Image subtraction/.test(TOUR[5].text) && /Cross-epoch tracking/.test(TOUR[6].text));
-check('closing lines are exactly as specified', TOUR_TEXT.analysisIntro === 'Welcome to Analysis! This is where exploration turns into investigation.'
-  && TOUR_TEXT.done === "You're ready! The universe is yours to explore." && TOUR_TEXT.doneButton === 'START EXPLORING'
+check('the cat says Analysis is optional and points at CONTINUE TO SUBMISSION', (() => {
+  const t = TOUR.find((x) => x.phase === 'explorer_continue')!;
+  return /optional/i.test(t.text) && /submit/i.test(t.text) && /continue-submission/.test(t.selector ?? '') && t.act === 'click';
+})());
+check('closing lines are exactly as specified', TOUR_TEXT.done === "You're ready! The universe is yours to explore." && TOUR_TEXT.doneButton === 'START EXPLORING'
   && TOUR_TEXT.skyNext === 'Ready to explore a little deeper? This is your Explorer.');
-check('each phase resolves to the page it runs on', tourRoute('explorer_intro') === 'explorer' && tourRoute('analysis_intro') === 'analysis'
-  && tourRoute('explorer_spectral') === 'explorer' && tourRoute('analysis_track') === 'analysis'
+check('explorer steps run on the explorer, submission and journal steps on theirs', tourRoute('explorer_spectral') === 'explorer' && tourRoute('explorer_continue') === 'explorer'
+  && tourRoute('submission_intro') === 'submit' && tourRoute('journal_intro') === 'journal'
   && tourRoute('exploring') === null && tourRoute('welcome_flying') === null);
 check('the welcome overlay covers only the first three states', ['welcome_flying', 'welcome_dialogue', 'entering_universe'].every((p) => isWelcomePhase(p as EntryPhase))
   && !isWelcomePhase('exploring') && !isWelcomePhase('explorer_image') && !isWelcomePhase('onboarding_complete'));

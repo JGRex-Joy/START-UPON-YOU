@@ -235,9 +235,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         : allFailed
           ? `Level-2 exposure discovery is unavailable right now (${failed.map((a) => `${a.provider}: ${a.error}`).join(' | ')}). AWS S3 data do not depend on it: the DR1 All-Sky Cube tile for this position can still be loaded from the Spectral tab.`
           : 'No SPHEREx spectral images covering this position were reported (yet). The DR1 All-Sky Cube (Spectral tab) is independent of this and may still cover the position.';
-      const dataset: Dataset = { origin: 'spherex-live', title: target.name, epochs, cube: null, structureNote: note };
+      const dataset: Dataset = { origin: 'spherex-live', title: target.name, epochs, cube: null, structureNote: note, discovery: { attempts, searchedAt: searchPos } };
+      // The tab is never changed here: the user asked for the Image view, and "no observations" is explained there.
+      // (It used to jump to the Spectral tab whenever discovery returned nothing, which is what opened "Channels".)
       dispatch({ dataset, phase: 'ready', message: null });
-      if (epochs.length > 0) void ensureEpoch(0); else dispatch({ tab: 'spectral' });
+      if (epochs.length > 0) void ensureEpoch(0);
     } catch (e) {
       if (token !== searchToken.current) return;
       dispatch({ phase: 'error', message: e instanceof Error ? e.message : String(e) });
@@ -321,7 +323,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (!res || ref.current.target !== t0) return; // cancelled / failed (state already published) / target changed
       const first = res.cube.blankChannels?.includes(0) ? Math.max(0, [...Array(res.cube.depth).keys()].find((k) => !res.cube.blankChannels?.includes(k)) ?? 0) : 0;
       dispatch((st) => (st.target === t0 && st.dataset
-        ? { dataset: { ...st.dataset, cube: res.cube, cubeInfo: res.info }, allSky: IDLE_ALLSKY, channel: first, tab: 'spectral' as StageTab }
+        ? { dataset: { ...st.dataset, cube: res.cube, cubeInfo: res.info }, allSky: IDLE_ALLSKY, channel: first }
         : {}));
     } finally {
       unsubscribe();

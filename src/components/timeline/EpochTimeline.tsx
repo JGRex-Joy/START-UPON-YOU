@@ -94,13 +94,14 @@ export function EpochTimeline() {
         </div>
       </div>
 
-      {insufficient ? (
+      {insufficient && (
         <p className="timeline__notice" role="status">
           {visible.length === 0
             ? 'No observation epochs for this selection.'
             : 'Only one observation epoch is available here — not enough temporal coverage for a time-lapse, comparison or subtraction.'}
         </p>
-      ) : (
+      )}
+      {visible.length > 0 && (
         <div className="timeline__rail">
           <div className="timeline__line" />
           {visible.map((i, k) => {

@@ -15,7 +15,7 @@ import { CUTOUT_SIZE_DEG, findObservations, IRSA_ORIGIN } from './index';
 export interface Level2DiscoveryProvider {
   readonly id: 'sia2' | 'tap';
   readonly label: string;
-  find(pos: SkyPosition): Promise<EpochEntry[]>;
+  find(pos: SkyPosition): Promise<EpochEntry[] | { epochs: EpochEntry[]; warnings?: string[] }>;
 }
 
 export const SIA2_COLLECTIONS = ['spherex_dr1', 'spherex_dr1_deep', 'spherex_qr3', 'spherex_qr3_deep'] as const;
@@ -74,7 +74,9 @@ export const sia2Provider: Level2DiscoveryProvider = {
     }));
     const ok = answers.filter((a): a is PromiseFulfilledResult<EpochEntry[]> => a.status === 'fulfilled');
     if (ok.length === 0) throw (answers[0] as PromiseRejectedResult).reason;
-    return ok.flatMap((a) => a.value);
+    // A collection that failed is not the same as a collection with no rows: report it instead of hiding it.
+    const warnings = answers.flatMap((a, i) => (a.status === 'rejected' ? [`${SIA2_COLLECTIONS[i]}: ${a.reason instanceof Error ? a.reason.message : String(a.reason)}`] : []));
+    return { epochs: ok.flatMap((a) => a.value), warnings };
   },
 };
 
@@ -84,7 +86,7 @@ export const tapProvider: Level2DiscoveryProvider = {
   find: async (pos) => (await findObservations(pos)).epochs,
 };
 
-export interface DiscoveryAttempt { provider: string; ok: boolean; count: number; error?: string }
+export interface DiscoveryAttempt { provider: string; ok: boolean; count: number; error?: string; warnings?: string[] }
 export interface DiscoveryResult { epochs: EpochEntry[]; attempts: DiscoveryAttempt[] }
 
 /** One entry per exposure (S3 key, else id); earlier providers win ties. */
@@ -109,7 +111,7 @@ export async function discoverEpochs(pos: SkyPosition, providers: Level2Discover
     if (pending === 0) return done();
     providers.forEach((p, i) => {
       p.find(pos).then(
-        (eps) => { attempts[i] = { provider: p.label, ok: true, count: eps.length }; lists[i] = eps; if (eps.length > 0 && !firstRows) { firstRows = true; timer = setTimeout(done, graceMs); } },
+        (res) => { const eps = Array.isArray(res) ? res : res.epochs; const warnings = Array.isArray(res) ? undefined : res.warnings; attempts[i] = { provider: p.label, ok: true, count: eps.length, ...(warnings?.length ? { warnings } : {}) }; lists[i] = eps; if (eps.length > 0 && !firstRows) { firstRows = true; timer = setTimeout(done, graceMs); } },
         (e) => { attempts[i] = { provider: p.label, ok: false, count: 0, error: e instanceof Error ? e.message : String(e) }; },
       ).finally(() => { if (--pending === 0) done(); });
     });

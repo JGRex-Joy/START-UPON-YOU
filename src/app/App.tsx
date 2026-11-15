@@ -91,8 +91,8 @@ function Shell() {
           />
         )}
         {route === 'landing' && <LandingPage onExplore={() => go('explorer')} />}
-        {route === 'explorer' && <ExplorerPage goAnalysis={() => go('analysis')} />}
-        {route === 'analysis' && <AnalysisPage goExplorer={() => go('explorer')} />}
+        {route === 'explorer' && <ExplorerPage goAnalysis={() => go('analysis')} goSubmission={() => go('submit')} />}
+        {route === 'analysis' && <AnalysisPage goExplorer={() => go('explorer')} goSubmission={() => go('submit')} />}
         {route === 'missions' && <MissionsPage go={go} />}
         {route === 'submit' && <SubmissionPage go={go} />}
         {route === 'journal' && <JournalPage go={go} />}

@@ -3,11 +3,11 @@ import type { Route } from '../../app/router';
 import { useStore } from '../../app/store';
 import { forgetEntered } from '../../app/entry';
 
-const LINKS: { route: Route; label: string }[] = [
+const LINKS: { route: Route; label: string; optional?: boolean }[] = [
   { route: 'missions', label: 'Missions' },
   { route: 'sky', label: 'Sky Map' },
   { route: 'explorer', label: 'Explorer' },
-  { route: 'analysis', label: 'Analysis' },
+  { route: 'analysis', label: 'Analysis', optional: true },
   { route: 'submit', label: 'Submission' },
   { route: 'journal', label: 'Journal' },
 ];
@@ -44,7 +44,7 @@ export function AppNav({ route, go, onLogoBurst, locked = false, allow = null }:
             title={locked ? 'Available once Nyan Cat has shown you around' : undefined}
             onClick={() => { if (!locked) go(l.route); }}
           >
-            <span className="nav__step">{i + 1}</span>{l.label}
+            <span className="nav__step">{i + 1}</span>{l.label}{l.optional && <span className="tag" title="Optional: you can submit without it">opt</span>}
           </button>
         ))}
         {locked

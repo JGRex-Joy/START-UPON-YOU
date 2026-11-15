@@ -9,6 +9,7 @@ import { ImageViewer } from '../components/sky/ImageViewer';
 import { SkyContext } from '../components/sky/SkyContext';
 import { CompareView } from '../components/comparison/CompareView';
 import { EpochTimeline } from '../components/timeline/EpochTimeline';
+import { ObservationList } from '../components/timeline/ObservationList';
 import { ChannelSelector } from '../components/spectral/ChannelSelector';
 import { ProvenancePanel } from '../components/analysis/ProvenancePanel';
 import { CatalogPanel } from '../components/analysis/CatalogPanel';
@@ -123,7 +124,43 @@ function CubeViewer() {
   );
 }
 
-export function ExplorerPage({ goAnalysis }: { goAnalysis: () => void }) {
+/**
+ * Image tab when the dataset has no individual observations. States the actual reason (a failing discovery service
+ * vs. a genuinely empty answer vs. a file that is a cube) instead of an empty or misleading viewer.
+ */
+function NoObservations({ onRetry, onOpenFile }: { onRetry: () => void; onOpenFile: () => void }) {
+  const { state, actions } = useStore();
+  const ds = state.dataset!;
+  const attempts = ds.discovery?.attempts ?? [];
+  const failed = attempts.filter((a) => !a.ok);
+  const allFailed = attempts.length > 0 && failed.length === attempts.length;
+  const warned = attempts.filter((a) => a.ok && a.warnings?.length);
+  const live = ds.origin === 'spherex-live';
+  return (
+    <div className="stage__empty">
+      <div className="obsnone" data-testid="no-observations">
+        <p className="stage__empty-title">{allFailed ? 'Observation lookup failed' : 'No individual observations to show'}</p>
+        {live && allFailed && <p className="allsky__err" role="alert">The archive services that list SPHEREx exposures could not be reached, so it is unknown whether observations exist here. Nothing is shown rather than guessing.</p>}
+        {live && !allFailed && <p>NASA/IPAC IRSA reported no SPHEREx exposure whose footprint covers {state.target?.searchPos.ra.toFixed(5)}°, {state.target?.searchPos.dec.toFixed(5)}°. This position may not have been observed (yet) in the released data.</p>}
+        {!live && <p>{ds.structureNote}</p>}
+        {live && (failed.length > 0 || warned.length > 0) && (
+          <ul className="obsnone__list mono">
+            {failed.map((a) => <li key={a.provider}>{a.provider}: {a.error}</li>)}
+            {warned.flatMap((a) => (a.warnings ?? []).map((w) => <li key={`${a.provider}-${w}`}>{a.provider} (partial): {w}</li>))}
+          </ul>
+        )}
+        <p className="dim">The 102 spectral channels are not observation dates, so they are never listed as epochs. {live ? 'The DR1 All-Sky Cube (a separate AWS product) can still cover this position:' : ''}</p>
+        <div className="stage__actions">
+          {live && <button className="btn btn--primary" onClick={onRetry}>Try the lookup again</button>}
+          <button className="btn" onClick={() => actions.patch({ tab: 'spectral' })}>Open Spectral (channels)</button>
+          <button className="btn" onClick={onOpenFile}>Open FITS file…</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function ExplorerPage({ goAnalysis, goSubmission }: { goAnalysis: () => void; goSubmission: () => void }) {
   const { state, actions } = useStore();
   const { dataset, phase, target, tab } = state;
   const fileRef = useRef<HTMLInputElement | null>(null);
@@ -205,7 +242,9 @@ export function ExplorerPage({ goAnalysis }: { goAnalysis: () => void }) {
     }
     if (tab === 'compare') return <CompareView />;
     if (tab === 'spectral') return <CubeViewer />;
-    if (dataset && nEpochs === 0 && dataset.cube) return <CubeViewer />;
+    // Image tab: only image-related views. A dataset without individual observations explains why instead of
+    // silently showing the spectral cube (channel controls belong to the Spectral tab alone).
+    if (dataset && nEpochs === 0) return <NoObservations onRetry={() => target && void actions.search(target.pos, target.name, target.challenge)} onOpenFile={() => fileRef.current?.click()} />;
     return <EpochViewer epochIndex={state.epochIndex} interactiveCandidates={false} onViewport={onImgViewport} />;
   })();
 
@@ -250,16 +289,22 @@ export function ExplorerPage({ goAnalysis }: { goAnalysis: () => void }) {
             <button key={t.id} role="tab" aria-selected={tab === t.id} className={`stage__tab ${tab === t.id ? 'is-active' : ''}`} onClick={() => actions.patch({ tab: t.id })}>{t.label}</button>
           ))}
           <span className="stage__tabs-spacer" />
-          {dataset && <button className="btn btn--ghost" onClick={goAnalysis}>Analysis tools →</button>}
+          <button className="btn btn--ghost" onClick={goAnalysis} disabled={!dataset} title="Optional: not required to submit">Analysis (optional)</button>
+          <button className="btn btn--primary btn--submit" data-testid="continue-submission" onClick={goSubmission}>CONTINUE TO SUBMISSION →</button>
         </div>
         <p className="toolnote"><img src={`${import.meta.env.BASE_URL}nyan-cat.png`} alt="" /><span><b>{TABS.find((t) => t.id === tab)?.label}</b> — {TABS.find((t) => t.id === tab)?.note}</span></p>
         <div className="stage__body">{stage}</div>
         <div className="stage__dock">
-          {tab === 'spectral' || (dataset && nEpochs === 0 && dataset.cube) ? <ChannelSelector /> : <EpochTimeline />}
+          {tab === 'spectral' ? <ChannelSelector /> : <EpochTimeline />}
         </div>
       </main>
 
       <aside className="rail rail--right" aria-label="Inspector">
+        {nEpochs > 0 && (
+          <Section title={`Observations (${nEpochs})`}>
+            <ObservationList />
+          </Section>
+        )}
         <Section title="Observation & provenance"><ProvenancePanel /></Section>
         {epochCoverage && (
           <Section title="Coverage" defaultOpen>
