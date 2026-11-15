@@ -14,7 +14,7 @@ npm run build      # typecheck + production build
 npm run preview
 ```
 
-Production hosting: serve `dist/` statically and add reverse-proxy rules for the prefixes in
+Production hosting (Vercel: `vercel.json`, Netlify: `public/_redirects` already contain the proxy rules; without them every archive lookup 404s): serve `dist/` statically and add reverse-proxy rules for the prefixes in
 `src/config/hosts.ts` (`/proxy/irsa`, `/proxy/vizier`, `/proxy/cds`) if the archives block direct browser requests.
 
 ## How the data model works (important)

@@ -1,0 +1,5 @@
+# Netlify equivalent of vercel.json (status 200 = proxy, not redirect)
+/proxy/irsa/*      https://irsa.ipac.caltech.edu/:splat 200
+/proxy/vizier/*    https://tapvizier.cds.unistra.fr/:splat 200
+/proxy/cds/*       https://cds.unistra.fr/:splat 200
+/proxy/s3spherex/* https://nasa-irsa-spherex.s3.us-east-1.amazonaws.com/:splat 200

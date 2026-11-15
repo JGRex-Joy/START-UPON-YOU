@@ -54,7 +54,8 @@ export async function fetchWithProxyFallback(url: string, init: RequestInit = {}
       } else {
         const body = (await r.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 300);
         // A real archive error (bad query, service down) will not be fixed by a direct request.
-        throw new ServiceError(`${host.label} answered HTTP ${r.status} via proxy${body ? `: ${body}` : ''}`, 'http', r.status);
+        const hostless = r.status === 404 && (/NOT_FOUND|could not be found/i.test(body) || !!r.headers.get('x-vercel-id'));
+        throw new ServiceError(`${host.label} answered HTTP ${r.status} via proxy${body ? `: ${body}` : ''}${hostless ? ` — this looks like YOUR HOSTING's 404, not the archive's: the ${host.prefix} rewrite is not deployed (see vercel.json / public/_redirects).` : ''}`, 'http', r.status);
       }
     } catch (e) {
       if (e instanceof ServiceError && e.kind === 'http') throw e;

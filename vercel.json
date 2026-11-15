@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    { "source": "/proxy/irsa/:path*", "destination": "https://irsa.ipac.caltech.edu/:path*" },
+    { "source": "/proxy/vizier/:path*", "destination": "https://tapvizier.cds.unistra.fr/:path*" },
+    { "source": "/proxy/cds/:path*", "destination": "https://cds.unistra.fr/:path*" },
+    { "source": "/proxy/s3spherex/:path*", "destination": "https://nasa-irsa-spherex.s3.us-east-1.amazonaws.com/:path*" }
+  ]
+}
